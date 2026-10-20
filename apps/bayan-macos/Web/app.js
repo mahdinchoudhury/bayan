@@ -26,7 +26,7 @@ let state = {
     tafsir: null,
     reciter: null,
     theme: "light",
-    fontSize: 36,
+    fontSize: 32,
     sidebarHidden: false,
     playbackSpeed: 1,
     repeatCount: 1,
@@ -642,7 +642,7 @@ function renderFlow(reader) {
     if (playingKey === v.verse_key) span.classList.add("playing");
     const marker = el(
       "span",
-      "﴿" + v.verse_number.toLocaleString("ar-EG") + "﴾",
+      v.verse_number.toLocaleString("ar-EG"),
       "end-mark",
     );
     span.append(marker);
