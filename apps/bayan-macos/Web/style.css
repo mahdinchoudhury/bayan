@@ -896,3 +896,65 @@ dialog footer {
   font-optical-sizing: auto;
   font-weight: 400;
 }
+/* Interaction states: errors stay inside the surface that caused them. */
+.interaction-error {
+  color: var(--ink);
+  background: var(--wash);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+#note-dialog {
+  position: fixed;
+  margin: 0;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 80px);
+  padding: 20px;
+  z-index: 30;
+}
+#note-dialog h2 {
+  font:
+    500 16px -apple-system,
+    sans-serif;
+}
+#note-dialog #note-body {
+  min-height: 150px;
+}
+#note-dialog footer {
+  flex-wrap: wrap;
+  gap: 5px;
+}
+#note-dialog #note-quote {
+  max-height: 62px;
+  overflow: auto;
+}
+dialog.compact-popup {
+  position: fixed;
+  margin: 0;
+  width: 330px;
+  padding: 16px;
+  z-index: 35;
+}
+#appearance-menu {
+  width: 170px;
+}
+#appearance-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+#translations-menu h2 {
+  font:
+    500 14px -apple-system,
+    sans-serif;
+}
+#translation-options {
+  max-height: 340px;
+  overflow: auto;
+}
+.source-choice:has(input:disabled) {
+  color: var(--muted);
+}

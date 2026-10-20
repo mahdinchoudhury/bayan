@@ -15,7 +15,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/bayan/core.test.cjs tests/bayan/service.test.mjs
+      - run: npm ci --prefix tests/bayan --ignore-scripts
+      - run: node --test tests/bayan/core.test.cjs tests/bayan/service.test.mjs tests/bayan/interactions.test.cjs
       - run: bash scripts/build-bayan-macos.sh
       - run: ditto -c -k --sequesterRsrc --keepParent dist/Bayan.app dist/Bayan-preview.zip
       - uses: actions/upload-artifact@v4

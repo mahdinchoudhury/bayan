@@ -66,7 +66,7 @@ notes stay on the Mac. Content requests include the requested surah and resource
 - Only content approved for this QF app appears; catalogs can differ by environment.
 - Search is local to downloaded surahs; no approved server search scope is needed.
 - No accounts, cloud sync, AI, or permanent audio downloads.
-- Arabic-only reading flows across verses. Original note behavior is adapted into a modal popup.
+- Arabic-only reading flows across verses. Original note behavior is adapted into a non-modal popup.
 - Content/font fidelity review, performance testing, signing,
   public-service rate limits, monitoring, and deployment remain before public launch.
 - The service binds to localhost. Do not expose it publicly in its current form.
@@ -86,7 +86,8 @@ content and recordings retain their separate source terms.
 ## Verify
 
 ```sh
-node --test tests/bayan/core.test.cjs tests/bayan/service.test.mjs
+npm ci --prefix tests/bayan --ignore-scripts
+node --test tests/bayan/core.test.cjs tests/bayan/service.test.mjs tests/bayan/interactions.test.cjs
 bash scripts/build-bayan-macos.sh
 ```
 

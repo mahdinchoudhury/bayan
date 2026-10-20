@@ -202,6 +202,20 @@
         </select></label
       >
     </footer>
+    <dialog id="appearance-menu" class="compact-popup" aria-label="Appearance">
+      <button data-theme="light" aria-pressed="false">Light</button>
+      <button data-theme="sepia" aria-pressed="false">Sepia</button>
+      <button data-theme="dark" aria-pressed="false">Dark</button>
+    </dialog>
+    <dialog
+      id="translations-menu"
+      class="compact-popup"
+      aria-label="English translations"
+    >
+      <h2>English translations</h2>
+      <p class="muted">Choose one to five to compare below each verse.</p>
+      <div id="translation-options"></div>
+    </dialog>
     <dialog id="settings">
       <div class="dialog-head">
         <h2>Make yourself at home</h2>
@@ -240,9 +254,10 @@
         <p class="muted">
           Notes, highlights, bookmarks, and reading position stay on this Mac.
         </p>
-        <button id="export-json">Export backup</button
-        ><button id="import-json">Import backup</button
+        <button id="export-json">Export study backup</button
+        ><button id="import-json">Import study backup</button
         ><button id="export-md">Export Markdown</button>
+        <p id="study-status" role="status"></p>
       </section>
       <footer class="muted">
         Bayan preview 0.1 · Based on bible-rs, MIT license.<br />Quran text,
@@ -295,6 +310,7 @@
       <button id="download-current" class="primary">
         Download current surah</button
       ><button id="download-all">Download all available surahs</button>
+      <button id="download-cancel" hidden>Stop download</button>
       <p id="download-status" role="status"></p>
       <div id="download-list"></div>
       <p class="muted">

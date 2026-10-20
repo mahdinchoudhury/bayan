@@ -3,9 +3,10 @@ import WebKit
 
 // Mac-only host. WebKit supplies CoreText Arabic shaping, bidi and accessibility.
 // The source app's verse-popup study model is preserved in Web/app.js.
-final class BayanHost: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavigationDelegate {
+final class BayanHost: NSObject, NSApplicationDelegate, NSWindowDelegate, WKScriptMessageHandler, WKNavigationDelegate {
     var window: NSWindow!
     var web: WKWebView!
+    var savingForExit = false
     let home = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Bayan", isDirectory: true)
     func applicationDidFinishLaunching(_ notification: Notification) {
         do { try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true) }
@@ -26,6 +27,7 @@ final class BayanHost: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
         window.toolbar = toolbar
         window.minSize = NSSize(width: 900, height: 640)
         window.contentView = web
+        window.delegate = self
         window.center()
         window.makeKeyAndOrderFront(nil)
         let menu = NSMenu()
@@ -50,6 +52,29 @@ final class BayanHost: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
     }
     @objc func about() { NSApp.orderFrontStandardAboutPanel(options: [.applicationName: "Bayan", .applicationVersion: "0.1 Preview", .credits: NSAttributedString(string: "A Quran reader for Mac. Based on michaelshimeles/bible-rs (MIT). Content provided by Quran Foundation when connected.")]) }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        NSApp.terminate(nil)
+        return false
+    }
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        if savingForExit { return .terminateCancel }
+        savingForExit = true
+        web.callAsyncJavaScript("if (window.prepareToClose) await window.prepareToClose();", arguments: [:], in: nil, in: .page) { result in
+            self.savingForExit = false
+            switch result {
+            case .success:
+                sender.reply(toApplicationShouldTerminate: true)
+            case .failure:
+                sender.reply(toApplicationShouldTerminate: false)
+                let alert = NSAlert()
+                alert.messageText = "Bayan could not save your changes"
+                alert.informativeText = "The app will stay open so you can keep your notes. Check available disk space, then try again."
+                alert.addButton(withTitle: "Keep Bayan open")
+                alert.runModal()
+            }
+        }
+        return .terminateLater
+    }
     func reply(_ id: Int, value: Any? = nil, error: String? = nil) {
         var message: [String: Any] = ["id": id]
         message["value"] = value ?? NSNull()
@@ -82,6 +107,11 @@ final class BayanHost: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
                     }
                     self.reply(id, value: value)
                 }.resume()
+            case "copy":
+                guard let text = body["text"] as? String else { throw HostError.message("No text to copy.") }
+                NSPasteboard.general.clearContents()
+                guard NSPasteboard.general.setString(text, forType: .string) else { throw HostError.message("The clipboard is unavailable. Please try again.") }
+                reply(id, value: true)
             case "export":
                 let panel = NSSavePanel()
                 panel.nameFieldStringValue = body["name"] as? String ?? "Bayan-notes.json"
