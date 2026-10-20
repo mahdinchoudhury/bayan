@@ -16,8 +16,14 @@ final class BayanHost: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
         web = WKWebView(frame: .zero, configuration: config)
         web.navigationDelegate = self
         web.setValue(false, forKey: "drawsBackground")
-        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1240, height: 850), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
+        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1240, height: 850), styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView], backing: .buffered, defer: false)
         window.title = "Bayan"
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.isMovableByWindowBackground = true
+        window.toolbarStyle = .unifiedCompact
+        let toolbar = NSToolbar(identifier: "BayanToolbar")
+        window.toolbar = toolbar
         window.minSize = NSSize(width: 900, height: 640)
         window.contentView = web
         window.center()

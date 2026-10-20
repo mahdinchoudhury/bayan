@@ -262,10 +262,7 @@ function renderSidebar() {
     const name = el("span", undefined, "name");
     name.append(
       el("span", c.name_simple),
-      el(
-        "small",
-        (c.translated_name?.name || "") + " · " + c.verses_count + " verses",
-      ),
+      el("small", c.translated_name?.name || ""),
     );
     b.append(
       el("span", String(c.id).padStart(2, "0"), "number"),
@@ -273,7 +270,14 @@ function renderSidebar() {
       el("span", c.name_arabic, "arabic-name"),
     );
     host.append(b);
+    b.title = `${c.name_simple} — ${c.translated_name?.name || ""}, ${c.verses_count} verses`;
+    if (c.id === state.position.chapter) b.setAttribute("aria-current", "page");
   }
+  requestAnimationFrame(() =>
+    host
+      .querySelector('[aria-current="page"]')
+      ?.scrollIntoView({ block: "nearest" }),
+  );
 }
 function emptyReader(title, body) {
   const empty = el("div", undefined, "empty");
@@ -286,7 +290,9 @@ function emptyReader(title, body) {
   );
   $("reader").replaceChildren(empty);
 }
+let verseObserver;
 function renderReader() {
+  verseObserver?.disconnect();
   applySettings();
   if (!current?.verses?.length) {
     emptyReader(
@@ -314,98 +320,70 @@ function renderReader() {
     ),
   );
   reader.append(heading);
+  $("toolbar-chapter").textContent =
+    chapter?.name_simple || chapterName(state.position.chapter);
+  $("toolbar-translation").textContent =
+    state.settings.translations.length > 1
+      ? state.settings.translations.length + " translations"
+      : resourceName("translations", state.settings.translations[0]) ||
+        "Translation";
   if (!state.settings.english && !state.settings.words) {
     renderFlow(reader);
     return;
   }
-  for (const v of current.verses) {
-    const s = entry(v.verse_key),
-      row = el("article", undefined, "verse");
-    row.id = "verse-" + v.verse_key;
-    row.dataset.key = v.verse_key;
-    row.classList.toggle("selected", selected === v.verse_key);
-    row.classList.toggle("playing", playingKey === v.verse_key);
-    if (s.color) row.style.backgroundColor = colors[s.color] + "55";
-    const tools = el("div", undefined, "verse-tools");
-    tools.append(
-      el("span", v.verse_key, "ref"),
-      button(s.bookmark ? "◆" : "◇", () => {
-        updateEntry(v.verse_key, { bookmark: !entry(v.verse_key).bookmark });
-        renderReader();
-      }),
-      button(s.note ? "Note •" : "Note", () => openNote(v)),
-      button("Tafsir", () => openTafsir(v)),
-      button("Listen", () => startAudio(v.verse_key)),
-      button("Copy", () =>
-        navigator.clipboard
-          .writeText(
-            (v.text_uthmani || "") +
-              "\n" +
-              (state.settings.english
-                ? (v.translations || []).map((t) => plain(t.text)).join("\n") +
-                  "\n"
-                : "") +
-              v.verse_key,
-          )
-          .catch(showError),
-      ),
-    );
-    row.append(tools);
-    row.onclick = () => {
-      selected = v.verse_key;
-      state.position.verse = selected;
-      for (const node of reader.querySelectorAll(".verse"))
-        node.classList.toggle("selected", node.dataset.key === selected);
-      save();
-    };
-    const words = (v.words || []).filter((w) => w.char_type_name === "word");
-    if (state.settings.words && words.length) {
-      const grid = el("div", undefined, "word-grid");
-      grid.setAttribute("translate", "no");
-      for (const w of words) {
-        const pair = el("div", undefined, "word-pair"),
-          a = el("span", w.text_uthmani || w.text || "", "arabic word"),
-          meaning = el("span", plain(w.translation?.text || ""), "meaning");
-        a.lang = "ar";
-        a.dir = "rtl";
-        a.tabIndex = 0;
-        meaning.tabIndex = 0;
-        for (const n of [a, meaning]) {
-          const highlight = (on) => {
-            a.classList.toggle("linked", on);
-            meaning.classList.toggle("linked", on);
-          };
-          n.onmouseenter = () => highlight(true);
-          n.onmouseleave = () => highlight(false);
-          n.onfocus = () => highlight(true);
-          n.onblur = () => highlight(false);
-        }
-        pair.append(a, meaning);
-        grid.append(pair);
+  // Mount nearby verses first, then fill the document as the reader scrolls.
+  // Placeholder rows have no empty buttons or inaccessible hidden controls.
+  const anchor = state.position.verse || selected;
+  const anchorIndex = Math.max(
+    0,
+    current.verses.findIndex((v) => v.verse_key === anchor),
+  );
+  const versesByKey = new Map(current.verses.map((v) => [v.verse_key, v]));
+  verseObserver = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const placeholder = entry.target;
+        const verse = versesByKey.get(placeholder.dataset.key);
+        if (verse) placeholder.replaceWith(buildVerse(verse, reader));
+        verseObserver.unobserve(placeholder);
       }
-      row.append(grid);
+    },
+    { root: $("main"), rootMargin: "700px 0px" },
+  );
+  const width = Math.max(320, reader.clientWidth - 116);
+  for (let index = 0; index < current.verses.length; index++) {
+    const v = current.verses[index];
+    if (current.verses.length <= 30 || Math.abs(index - anchorIndex) <= 3) {
+      reader.append(buildVerse(v, reader));
     } else {
-      const a = el("div", v.text_uthmani || "", "arabic flow");
-      a.lang = "ar";
-      a.dir = "rtl";
-      a.setAttribute("translate", "no");
-      row.append(a);
+      const placeholder = el("div", undefined, "verse-placeholder");
+      placeholder.id = "verse-" + v.verse_key;
+      placeholder.dataset.key = v.verse_key;
+      const wordCount = (v.words || []).filter(
+        (w) => w.char_type_name === "word",
+      ).length;
+      const arabicLines = state.settings.words
+        ? Math.ceil(wordCount / Math.max(3, Math.floor(width / 78)))
+        : Math.ceil((v.text_uthmani || "").length / Math.max(30, width / 12));
+      const translationLines = state.settings.english
+        ? (v.translations || []).reduce(
+            (n, t) =>
+              n + Math.ceil(plain(t.text).length / Math.max(35, width / 9)),
+            0,
+          )
+        : 0;
+      placeholder.style.height =
+        Math.max(
+          140,
+          52 +
+            arabicLines * (state.settings.words ? 110 : 68) +
+            translationLines * 31,
+        ) + "px";
+      placeholder.setAttribute("aria-hidden", "true");
+      reader.append(placeholder);
+      verseObserver.observe(placeholder);
     }
-    if (state.settings.english)
-      for (const t of v.translations || []) {
-        const p = el("div", plain(t.text), "translation");
-        p.append(
-          el("span", resourceName("translations", t.resource_id), "source"),
-        );
-        row.append(p);
-        if (t.foot_notes?.length) {
-          const details = el("details", undefined, "footnote");
-          details.append(el("summary", "Translation footnotes"));
-          for (const f of t.foot_notes) details.append(el("p", plain(f.text)));
-          row.append(details);
-        }
-      }
-    reader.append(row);
   }
   reader.append(
     el(
@@ -416,6 +394,98 @@ function renderReader() {
   );
   $("back").disabled = state.position.chapter <= 1;
   $("forward").disabled = state.position.chapter >= 114;
+}
+function buildVerse(v, reader) {
+  const s = entry(v.verse_key),
+    row = el("article", undefined, "verse");
+  row.id = "verse-" + v.verse_key;
+  row.dataset.key = v.verse_key;
+  row.classList.toggle("selected", selected === v.verse_key);
+  row.classList.toggle("playing", playingKey === v.verse_key);
+  if (s.color) row.style.backgroundColor = colors[s.color] + "55";
+  const tools = el("div", undefined, "verse-tools");
+  tools.append(
+    el("span", v.verse_key, "ref"),
+    button(s.bookmark ? "◆" : "◇", () => {
+      updateEntry(v.verse_key, { bookmark: !entry(v.verse_key).bookmark });
+      renderReader();
+    }),
+    button(s.note ? "Note •" : "Note", () => openNote(v)),
+    button("Tafsir", () => openTafsir(v)),
+    button("Listen", () => startAudio(v.verse_key)),
+    button("Copy", () =>
+      navigator.clipboard
+        .writeText(
+          (v.text_uthmani || "") +
+            "\n" +
+            (state.settings.english
+              ? (v.translations || []).map((t) => plain(t.text)).join("\n") +
+                "\n"
+              : "") +
+            v.verse_key,
+        )
+        .catch(showError),
+    ),
+  );
+  row.append(tools);
+  row.onclick = () => {
+    selected = v.verse_key;
+    state.position.verse = selected;
+    for (const node of reader.querySelectorAll(".verse"))
+      node.classList.toggle("selected", node.dataset.key === selected);
+    save();
+  };
+  const words = (v.words || []).filter((w) => w.char_type_name === "word");
+  if (state.settings.words && words.length) {
+    const grid = el("div", undefined, "word-grid");
+    grid.setAttribute("translate", "no");
+    for (const w of words) {
+      const pair = el("div", undefined, "word-pair"),
+        a = el("span", w.text_uthmani || w.text || "", "arabic word"),
+        meaning = el("span", plain(w.translation?.text || ""), "meaning");
+      a.lang = "ar";
+      a.dir = "rtl";
+      a.tabIndex = 0;
+      meaning.tabIndex = 0;
+      for (const n of [a, meaning]) {
+        const highlight = (on) => {
+          a.classList.toggle("linked", on);
+          meaning.classList.toggle("linked", on);
+        };
+        n.onmouseenter = () => highlight(true);
+        n.onmouseleave = () => highlight(false);
+        n.onfocus = () => highlight(true);
+        n.onblur = () => highlight(false);
+      }
+      pair.append(a, meaning);
+      grid.append(pair);
+    }
+    row.append(grid);
+  } else {
+    const a = el("div", v.text_uthmani || "", "arabic flow");
+    a.lang = "ar";
+    a.dir = "rtl";
+    a.setAttribute("translate", "no");
+    row.append(a);
+  }
+  if (state.settings.english)
+    for (const t of v.translations || []) {
+      // Some source records omit whitespace after a sentence. Add display-only
+      // spacing; keep the source record and all Arabic text untouched.
+      const prose = plain(t.text).replace(/([a-z][.!?])(?=[A-Z][a-z])/g, "$1 ");
+      const p = el("div", prose, "translation");
+      p.append(
+        el("span", resourceName("translations", t.resource_id), "source"),
+      );
+      row.append(p);
+      if (t.foot_notes?.length) {
+        const details = el("details", undefined, "footnote");
+        details.append(el("summary", "Translation footnotes"));
+        for (const f of t.foot_notes) details.append(el("p", plain(f.text)));
+        row.append(details);
+      }
+    }
+  return row;
 }
 function renderFlow(reader) {
   const actions = el("div", undefined, "flow-actions");
@@ -452,7 +522,11 @@ function renderFlow(reader) {
     if (s.color) span.style.backgroundColor = colors[s.color] + "55";
     if (selected === v.verse_key) span.classList.add("selected");
     if (playingKey === v.verse_key) span.classList.add("playing");
-    const marker = el("span", " ﴿" + v.verse_number + "﴾ ", "end-mark");
+    const marker = el(
+      "span",
+      "﴿" + v.verse_number.toLocaleString("ar-EG") + "﴾",
+      "end-mark",
+    );
     span.append(marker);
     const choose = () => {
       selected = v.verse_key;
@@ -756,16 +830,16 @@ document.querySelectorAll("[data-tab]").forEach(
 );
 $("sidebar-toggle").onclick = () => $("sidebar").classList.toggle("hidden");
 $("settings-open").onclick = openSettings;
-$("english").onclick = () => {
-  state.settings.english = !state.settings.english;
+$("translation-open").onclick = openSettings;
+function toggleReadingSetting(field) {
+  const anchor = state.position.verse || selected;
+  state.settings[field] = !state.settings[field];
   save();
   renderReader();
-};
-$("words").onclick = () => {
-  state.settings.words = !state.settings.words;
-  save();
-  renderReader();
-};
+  if (anchor) scrollToVerse(anchor);
+}
+$("english").onclick = () => toggleReadingSetting("english");
+$("words").onclick = () => toggleReadingSetting("words");
 $("appearance").onclick = () => {
   const themes = ["light", "sepia", "dark"];
   state.settings.theme = themes[(themes.indexOf(state.settings.theme) + 1) % 3];

@@ -13,43 +13,135 @@
   </head>
   <body>
     <header class="toolbar">
-      <button
-        id="sidebar-toggle"
-        title="Toggle sidebar (⌘B)"
-        aria-label="Toggle sidebar"
-      >
-        ☰
-      </button>
-      <div class="brand">Bayan<span>Quran for Mac</span></div>
-      <button id="back" title="Previous surah" aria-label="Previous surah">
-        ‹
-      </button>
-      <button id="forward" title="Next surah" aria-label="Next surah">›</button>
-      <button id="jump-open" class="jump">Go to a verse <kbd>⌘K</kbd></button>
-      <div class="spacer"></div>
-      <button id="english" aria-pressed="false">English</button>
-      <button id="words" aria-pressed="false">Word meanings</button>
-      <button
-        id="appearance"
-        title="Change appearance"
-        aria-label="Change appearance"
-      >
-        ◐
-      </button>
-      <button id="settings-open" title="Settings" aria-label="Settings">
-        ⚙
-      </button>
+      <div class="toolbar-start">
+        <span class="brand">Bayan</span
+        ><button
+          id="sidebar-toggle"
+          title="Toggle sidebar (⌘B)"
+          aria-label="Toggle sidebar"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="4" width="18" height="16" rx="3" />
+            <path d="M10 4v16" />
+          </svg>
+        </button>
+      </div>
+      <div class="history-controls">
+        <button id="back" title="Previous surah" aria-label="Previous surah">
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m15 6-6 6 6 6" />
+          </svg></button
+        ><button id="forward" title="Next surah" aria-label="Next surah">
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m9 6 6 6-6 6" />
+          </svg>
+        </button>
+      </div>
+      <div class="location-controls">
+        <button id="jump-open" class="jump" title="Go to a verse (⌘K)">
+          <span id="toolbar-chapter">Quran</span
+          ><svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m8 10 4 4 4-4" />
+          </svg></button
+        ><span class="toolbar-divider"></span
+        ><button id="translation-open" title="Choose translations">
+          <span id="toolbar-translation">Translation</span
+          ><svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m8 10 4 4 4-4" />
+          </svg>
+        </button>
+      </div>
+      <div class="reading-controls">
+        <button
+          id="english"
+          aria-pressed="false"
+          title="Show English translation"
+        >
+          English</button
+        ><button
+          id="words"
+          aria-pressed="false"
+          title="Show word meanings"
+          aria-label="Word meanings"
+        >
+          Words</button
+        ><button
+          id="appearance"
+          title="Change appearance"
+          aria-label="Change appearance"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="8" />
+            <path
+              d="M12 4v16a8 8 0 0 1 0-16"
+              fill="currentColor"
+              stroke="none"
+            />
+          </svg></button
+        ><button
+          id="settings-open"
+          title="Text and settings"
+          aria-label="Settings"
+        >
+          Aa</button
+        ><input
+          id="search"
+          type="search"
+          placeholder="Search"
+          aria-label="Search downloaded Quran"
+        />
+      </div>
     </header>
     <div class="workspace">
       <aside id="sidebar">
-        <div class="side-search">
-          <input
-            id="search"
-            type="search"
-            placeholder="Search downloaded Quran"
-            aria-label="Search downloaded Quran"
-          />
-        </div>
         <nav class="tabs" aria-label="Library">
           <button data-tab="surahs" class="active">Surahs</button
           ><button data-tab="juz">Juz</button
