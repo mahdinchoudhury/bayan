@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="google" content="notranslate" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src https:; connect-src 'none'; object-src 'none'; base-uri 'none'"
+    />
+    <title>Bayan</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="toolbar">
+      <button
+        id="sidebar-toggle"
+        title="Toggle sidebar (⌘B)"
+        aria-label="Toggle sidebar"
+      >
+        ☰
+      </button>
+      <div class="brand">Bayan<span>Quran for Mac</span></div>
+      <button id="back" title="Previous surah" aria-label="Previous surah">
+        ‹
+      </button>
+      <button id="forward" title="Next surah" aria-label="Next surah">›</button>
+      <button id="jump-open" class="jump">Go to a verse <kbd>⌘K</kbd></button>
+      <div class="spacer"></div>
+      <button id="english" aria-pressed="false">English</button>
+      <button id="words" aria-pressed="false">Word meanings</button>
+      <button
+        id="appearance"
+        title="Change appearance"
+        aria-label="Change appearance"
+      >
+        ◐
+      </button>
+      <button id="settings-open" title="Settings" aria-label="Settings">
+        ⚙
+      </button>
+    </header>
+    <div class="workspace">
+      <aside id="sidebar">
+        <div class="side-search">
+          <input
+            id="search"
+            type="search"
+            placeholder="Search downloaded Quran"
+            aria-label="Search downloaded Quran"
+          />
+        </div>
+        <nav class="tabs" aria-label="Library">
+          <button data-tab="surahs" class="active">Surahs</button
+          ><button data-tab="juz">Juz</button
+          ><button data-tab="study">Study</button>
+        </nav>
+        <div id="side-content"></div>
+        <footer class="side-footer">
+          <span id="offline-state">On this Mac</span
+          ><button id="downloads-open">Downloads</button>
+        </footer>
+      </aside>
+      <main id="main">
+        <div id="notice" role="status" hidden></div>
+        <div id="reader"></div>
+      </main>
+      <aside id="tafsir-panel" hidden>
+        <div class="panel-head">
+          <h2>Tafsir</h2>
+          <button id="tafsir-close" aria-label="Close tafsir">×</button>
+        </div>
+        <select id="tafsir-choice" aria-label="Tafsir source"></select>
+        <div id="tafsir-content"></div>
+      </aside>
+    </div>
+    <footer class="player">
+      <button id="play" class="play" aria-label="Play recitation">▶</button>
+      <div class="playing-label">
+        <strong id="playing-reference">Recitation</strong
+        ><span id="playing-status">Choose a verse to begin</span>
+      </div>
+      <select id="reciter" aria-label="Reciter">
+        <option value="">Connect to load reciters</option>
+      </select>
+      <div class="spacer"></div>
+      <label
+        >Speed
+        <select id="speed">
+          <option value="0.75">0.75×</option>
+          <option value="1" selected>1×</option>
+          <option value="1.25">1.25×</option>
+          <option value="1.5">1.5×</option>
+        </select></label
+      >
+      <label
+        >Repeat
+        <select id="repeat">
+          <option value="1">Off</option>
+          <option value="2">2 times</option>
+          <option value="3">3 times</option>
+          <option value="0">Continuously</option>
+        </select></label
+      >
+      <label
+        >Stop
+        <select id="stop">
+          <option value="surah">After surah</option>
+          <option value="verse">After verse</option>
+        </select></label
+      >
+    </footer>
+    <dialog id="settings">
+      <div class="dialog-head">
+        <h2>Make yourself at home</h2>
+        <button data-close="settings" aria-label="Close settings">×</button>
+      </div>
+      <section>
+        <h3>Reading</h3>
+        <label
+          >Arabic text size
+          <input id="font-size" type="range" min="26" max="54" value="36"
+        /></label>
+        <div id="translations-list"></div>
+        <p class="muted">
+          Translations appear beneath each verse. Word meanings are separate
+          from published translations.
+        </p>
+      </section>
+      <section>
+        <h3>Quran Foundation connection</h3>
+        <label
+          >Content service address<input
+            id="service-url"
+            type="url"
+            placeholder="http://127.0.0.1:8787"
+        /></label>
+        <p class="muted">
+          Bayan’s service keeps Quran Foundation credentials private. Enter the
+          service address here, never a client secret.
+        </p>
+        <button id="connect" class="primary">Connect</button
+        ><button id="access">Open Developer Console</button>
+        <p id="connection-status" role="status"></p>
+      </section>
+      <section>
+        <h3>Your study library</h3>
+        <p class="muted">
+          Notes, highlights, bookmarks, and reading position stay on this Mac.
+        </p>
+        <button id="export-json">Export backup</button
+        ><button id="import-json">Import backup</button
+        ><button id="export-md">Export Markdown</button>
+      </section>
+      <footer class="muted">
+        Bayan preview 0.1 · Based on bible-rs, MIT license.<br />Quran text,
+        translations, and tafsir are provided by Quran Foundation when
+        connected.
+      </footer>
+    </dialog>
+    <dialog id="jump-dialog">
+      <h2>Where would you like to read?</h2>
+      <form id="jump-form">
+        <input
+          id="jump-input"
+          placeholder="2:255 or a surah name"
+          aria-label="Surah or verse reference"
+          autofocus
+        />
+        <p class="muted">Enter a surah number, name, or verse reference.</p>
+        <button class="primary">Go to verse</button
+        ><button type="button" data-close="jump-dialog">Cancel</button>
+      </form>
+    </dialog>
+    <dialog id="note-dialog">
+      <div class="dialog-head">
+        <h2 id="note-title">Personal note</h2>
+        <button data-close="note-dialog" aria-label="Close note">×</button>
+      </div>
+      <p id="note-quote" class="muted"></p>
+      <div id="highlight-colors" aria-label="Highlight color"></div>
+      <textarea
+        id="note-body"
+        placeholder="Your reflection on this verse…"
+        aria-label="Personal note"
+      ></textarea>
+      <footer>
+        <span id="saved-status" role="status">Saved on this Mac</span>
+        <div class="spacer"></div>
+        <button id="delete-note">Delete note</button
+        ><button data-close="note-dialog" class="primary">Done</button>
+      </footer>
+    </dialog>
+    <dialog id="downloads">
+      <div class="dialog-head">
+        <h2>Read offline</h2>
+        <button data-close="downloads" aria-label="Close downloads">×</button>
+      </div>
+      <p>
+        Downloaded surahs include your selected translations and tafsir. Bayan
+        checks for text updates when connected.
+      </p>
+      <button id="download-current" class="primary">
+        Download current surah</button
+      ><button id="download-all">Download all available surahs</button>
+      <p id="download-status" role="status"></p>
+      <div id="download-list"></div>
+      <p class="muted">
+        Audio streams from the reciter’s source. Permanent audio downloads await
+        confirmation of recording rights.
+      </p>
+    </dialog>
+    <audio id="audio" preload="none"></audio>
+    <script src="core.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

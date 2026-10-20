@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+    paths: ['crates/**', 'Cargo.*', 'xtask/**', 'apps/ios/**']
   pull_request:
 
 env:

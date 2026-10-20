@@ -1,0 +1,24 @@
+name: Bayan preview
+on:
+  push:
+    branches: [main]
+    paths: ['apps/bayan-macos/**', 'service/bayan/**', 'tests/bayan/**', 'scripts/build-bayan-macos.sh', '.github/workflows/bayan.yml']
+  pull_request:
+    paths: ['apps/bayan-macos/**', 'service/bayan/**', 'tests/bayan/**', 'scripts/build-bayan-macos.sh', '.github/workflows/bayan.yml']
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/bayan/core.test.cjs tests/bayan/service.test.mjs
+      - run: bash scripts/build-bayan-macos.sh
+      - run: ditto -c -k --sequesterRsrc --keepParent dist/Bayan.app dist/Bayan-preview.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Bayan-Mac-preview
+          path: dist/Bayan-preview.zip

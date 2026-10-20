@@ -3,3 +3,7 @@
 /.sources
 *.dmg
 .DS_Store
+/work/
+.env
+.env.*
+!.env.example
